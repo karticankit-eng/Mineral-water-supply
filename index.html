@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AQUACIUM - Water Order & Owner Portal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #f4f8fb; color: #333; }
+
+        /* Header Style */
+        .header {
+            background-color: #0077b6;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .brand { font-size: 22px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .nav-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .nav-btn {
+            background: #ffffff;
+            color: #0077b6;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .nav-btn.admin { background: #023e8a; color: white; }
+
+        .container { max-width: 550px; margin: 20px auto; padding: 0 15px; }
+
+        /* Card Layout */
+        .card-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e3edf7;
+        }
+
+        .title-text { font-size: 18px; font-weight: bold; color: #023e8a; margin-bottom: 5px; }
+        .sub-text { font-size: 13px; color: #666; margin-bottom: 15px; }
+
+        /* Item Cards */
+        .bundle-card {
+            background: #f8fbfe;
+            border: 1px solid #d0e2f4;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bundle-info h4 { font-size: 16px; color: #000; margin-bottom: 4px; }
+        .bundle-price { font-size: 16px; font-weight: bold; color: #0077b6; }
+        .bundle-unit { font-size: 12px; color: #888; font-weight: normal; }
+        .per-bottle { font-size: 11px; color: #999; margin-top: 2px; }
+
+        /* Counter Buttons */
+        .counter { display: flex; align-items: center; gap: 10px; }
+        .btn-qty {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-minus { background: #e2e8f0; color: #475569; }
+        .btn-plus { background: #0077b6; color: white; }
+        .qty-val { font-weight: bold; font-size: 15px; width: 15px; text-align: center; }
+
+        /* Input styling */
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 15px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #0077b6;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        .hidden { display: none !important; }
+        .bill-box { background: #e0f2fe; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; }
+        .order-card { background: #f1f5f9; padding: 12px; border-left: 4px solid #0077b6; margin-bottom: 12px; font-size: 13px; border-radius: 4px; cursor: pointer; }
+        .order-card:hover { background: #e2e8f0; }
+
+        /* Full Size Live Banner Preview Box */
+        .banner-preview {
+            background: linear-gradient(135deg, #0077b6, #00b4d8);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 3px dashed #ffffff;
+        }
+        .banner-preview h2 { font-size: 26px; margin-bottom: 8px; text-transform: uppercase; }
+        .banner-preview p { font-size: 15px; margin: 5px 0; opacity: 0.95; }
+        .banner-full-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-top: 12px; border: 2px solid white; display: none; }
+        .ai-generated-box { background: rgba(255, 255, 255, 0.2); padding: 10px; border-radius: 6px; margin-top: 10px; font-weight: bold; display: none; }
+
+        /* Print formatting */
+        @media print {
+            body * { visibility: hidden; }
+            .printable-bill, .printable-bill *, .printable-banner, .printable-banner * { visibility: visible; }
+            .printable-bill { position: absolute; left: 0; top: 0; width: 100%; }
+            .printable-banner { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Area -->
+    <div class="header">
+        <div class="brand">🧴 AQUACIUM</div>
+        <div class="nav-btns">
+            <button class="nav-btn" onclick="showPage('customerPage')">🛒 Order Water</button>
+            <button class="nav-btn admin" onclick="showPage('ownerLoginPage')">👤 Owner Panel</button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- ================= 1. CUSTOMER ORDER PAGE ================= -->
+        <div id="customerPage" class="page-section">
+            
+            <!-- Step 1: Select Bundles -->
+            <div class="card-box" id="step1Bundles">
+                <div class="title-text">📦 Select Water Bundles (1 Bundle = 30 Bottles)</div>
+                <div class="sub-text">Aapko sirf bundles select karne hain. Bill automatically calculate hoga[span_2](start_span)[span_2](end_span).</div>
+
+                <div class="bundle-card">
+                    <div class="bundle-info">
+                        <h4>2L Bundle (30 Pcs)</h4>
+                        <div class="bundle-price">₹<span id="priceDisplay2L">1200</span> <span class="bundle-unit">/ bundle</span></div>
+                        <div class="per-bottle">₹<span id="perBottle2L">40</span> per bottle</div>
+                    </div>
+                    <div class="counter">
+                        <button class="btn-qty btn-minus" onclick="changeQty('2L', -1)">-</button>
+                        <span class="qty-val" id="qty2L">0</span>
+                        <button class="btn-qty btn-plus" onclick="changeQty('2L', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="bundle-card">
+                    <div class="bundle-info">
+                        <h4>1L Bundle (30 Pcs)</h4>
+                        <div class="bundle-price">₹<span id="priceDisplay1L">480</span> <span class="bundle-unit">/ bundle</span></div>
+                        <div class="per-bottle">₹<span id="perBottle1L">16</span> per bottle</div>
+                    </div>
+                    <div class="counter">
+                        <button class="btn-qty btn-minus" onclick="changeQty('1L', -1)">-</button>
+                        <span class="qty-val" id="qty1L">0</span>
+                        <button class="btn-qty btn-plus" onclick="changeQty('1L', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="bundle-card">
+                    <div class="bundle-info">
+                        <h4>500ml Bundle (30 Pcs)</h4>
+                        <div class="bundle-price">₹<span id="priceDisplay500ml">210</span> <span class="bundle-unit">/ bundle</span></div>
+                        <div class="per-bottle">₹<span id="perBottle500ml">7</span> per bottle</div>
+                    </div>
+                    <div class="counter">
+                        <button class="btn-qty btn-minus" onclick="changeQty('500ml', -1)">-</button>
+                        <span class="qty-val" id="qty500ml">0</span>
+                        <button class="btn-qty btn-plus" onclick="changeQty('500ml', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="bill-box">
+                    <h3 style="color:#023e8a;">Total Bill: ₹<span id="totalBillAmount">0</span></h3>
+                </div>
+
+                <button class="btn-submit" onclick="goToStep2Banner()" style="margin-top: 15px;">Continue to Banner Design ➡️</button>
+            </div>
+
+            <!-- Step 2: Customer Full Size Banner Preview & Gallery/AI Options -->
+            <div class="card-box hidden" id="step2Details">
+                <div class="title-text">✨ Full Size Banner Preview (Gallery & AI)</div>
+                <div class="sub-text">Aap gallery se photo select karein ya AI se banner banwayein, yahan full size me dikhega:</div>
+
+                <!-- Full Size Live Banner Preview Box -->
+                <div class="banner-preview" id="liveBannerBox">
+                    <h2 id="bannerShopName">AQUACIUM PURE WATER</h2>
+                    <p id="bannerTagline">✨ Special Pure Water Supply Offer ✨</p>
+                    <p id="bannerAddress" style="font-size: 13px; margin-top: 5px;">📍 Address: India</p>
+                    
+                    <!-- AI Generated Result Box -->
+                    <div id="aiResultDisplayBox" class="ai-generated-box"></div>
+                    
+                    <!-- Gallery Full Size Image Preview -->
+                    <img id="bannerFullUserImg" class="banner-full-img" alt="Gallery Full Banner">
+                </div>
+
+                <label><strong>Shop / Brand Title:</strong></label>
+                <input type="text" id="inputShopName" value="AQUACIUM PURE WATER" onkeyup="updateBannerLive()">
+
+                <label><strong>Shop Full Address:</strong></label>
+                <input type="text" id="inputShopAddress" placeholder="Apna pura shop address yahan likhein..." onkeyup="updateBannerLive()">
+
+                <!-- AI Generator Option -->
+                <label><strong>🤖 AI se Banner Banvane ke liye yahan likhein (Jaise: "Mujhe royal blue theme me offer banner chahiye"):</strong></label>
+                <input type="text" id="aiPromptInput" placeholder="Apni demand yahan likhein..." onkeyup="generateAIBannerLive()">
+
+                <!-- Gallery Full Size Image Upload -->
+                <label><strong>🖼️ Ya apni Gallery se Full Size Banner Select Karein:</strong></label>
+                <input type="file" id="galleryImageInput" accept="image/*" onchange="previewFullGalleryImage(event)">
+
+                <hr style="margin: 15px 0; border:0; border-top:1px solid #ddd;">
+
+                <div class="title-text">📝 Customer Details</div>
+                <input type="text" id="custName" placeholder="Aapka Naam">
+                <input type="text" id="custMobile" placeholder="Mobile Number">
+                <textarea id="custAddress" placeholder="Pura Delivery Address"></textarea>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-submit" style="background: #64748b;" onclick="backToStep1()">⬅️ Back</button>
+                    <button class="btn-submit" onclick="submitOrderOK()" style="background: #2e7d32;">✅ Submit Order (OK)</button>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- ================= 2. OWNER LOGIN PAGE ================= -->
+        <div id="ownerLoginPage" class="page-section card-box hidden">
+            <div class="title-text">🔒 Owner Security Login</div>
+            <p class="sub-text">Orders aur History dekhne ke liye PIN daalein:</p>
+            <input type="password" id="ownerPinInput" placeholder="Enter PIN">
+            <button class="btn-submit" onclick="loginOwner()">Login</button>
+        </div>
+
+
+        <!-- ================= 3. OWNER DASHBOARD ================= -->
+        <div id="ownerDashboardPage" class="page-section hidden">
+            
+            <div class="nav-menu" style="margin-bottom: 15px; display: flex; gap: 5px; flex-wrap: wrap;">
+                <button class="nav-btn" onclick="showOwnerTab('incomingTab')" style="flex:1; background:#0077b6; color:white;">Incoming Orders</button>
+                <button class="nav-btn" onclick="showOwnerTab('historyTab')" style="flex:1; background:#0077b6; color:white;">Sold History</button>
+                <button class="nav-btn" onclick="showOwnerTab('ratesTab')" style="flex:1; background:#0077b6; color:white;">Rates</button>
+                <button class="nav-btn" onclick="showOwnerTab('settingsTab')" style="flex:1; background:#0077b6; color:white;">PIN</button>
+            </div>
+
+            <!-- Tab 1: Incoming Orders -->
+            <div id="incomingTab" class="owner-tab card-box">
+                <div class="title-text">📥 New Incoming Orders</div>
+                <p class="sub-text">Order par click karke detail dekhein, bill print karein ya full banner print karein:</p>
+                <div id="incomingOrdersList"></div>
+            </div>
+
+            <!-- Detailed View Modal -->
+            <div id="orderDetailBox" class="card-box hidden" style="border: 2px solid #0077b6; background: #f8fbfe;">
+                <div class="title-text">📄 Order Full Detail & Separate Print Options</div>
+                
+                <!-- Section 1: Order Details (For Bill Print) -->
+                <div id="printBillSection" class="printable-bill" style="background: white; padding: 12px; border: 1px dashed #ccc; margin-bottom: 15px;">
+                    <h3>--- AQUACIUM ORDER BILL / INVOICE ---</h3>
+                    <div id="detailContent" style="margin: 10px 0; font-size: 14px; line-height: 1.6;"></div>
+                </div>
+
+                <!-- Section 2: Full Size Banner Preview (For Banner Print) -->
+                <div id="printBannerSection" class="printable-banner" style="background: linear-gradient(135deg, #0077b6, #00b4d8); color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+                    <div id="bannerPrintContent"></div>
+                </div>
+
+                <!-- Separate Print Buttons -->
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                    <button class="btn-submit" style="background: #0288d1;" onclick="printOnlyBill()">🖨️ Print Order Bill / Invoice</button>
+                    <button class="btn-submit" style="background: #6200ea;" onclick="printOnlyBanner()">🖨️ Print Full Size Customer Banner</button>
+                    <button class="btn-submit" style="background: #2e7d32;" onclick="markAsDeliveredCurrent()">✅ Clear / Delivered (Move to Sold History)</button>
+                    <button class="btn-submit" style="background: #64748b;" onclick="closeDetailBox()">Close</button>
+                </div>
+            </div>
+
+            <!-- Tab 2: Sold History -->
+            <div id="historyTab" class="owner-tab card-box hidden">
+                <div class="title-text">📋 Sold Orders History (Permanent)</div>
+                <p class="sub-text">Delivered orders ki permanent history yahan hai:</p>
+                <div id="soldHistoryList"></div>
+                <button class="btn-submit" style="background:#d32f2f; margin-top:10px;" onclick="clearHistory()">Clear History</button>
+            </div>
+
+            <!-- Tab 3: Rate Manager -->
+            <div id="ratesTab" class="owner-tab card-box hidden">
+                <div class="title-text">⚙️ Rate Manager</div>
+                <label><strong>2L Bundle Price (₹):</strong></label>
+                <input type="number" id="rateInput2L">
+                <label><strong>1L Bundle Price (₹):</strong></label>
+                <input type="number" id="rateInput1L">
+                <label><strong>500ml Bundle Price (₹):</strong></label>
+                <input type="number" id="rateInput500ml">
+                <button class="btn-submit" style="background:#0288d1;" onclick="saveOwnerRates()">Save Rates</button>
+            </div>
+
+            <!-- Tab 4: PIN Settings -->
+            <div id="settingsTab" class="owner-tab card-box hidden">
+                <div class="title-text">🔑 PIN Settings</div>
+                <input type="password" id="newPinInput" placeholder="Naya PIN daalein">
+                <button class="btn-submit" style="background:#455a64;" onclick="changePin()">Save PIN</button>
+            </div>
+
+            <button class="btn-submit" style="background:#d32f2f; margin-top: 15px;" onclick="logoutOwner()">Logout</button>
+        </div>
+
+    </div>
+
+<script>
+    let qty = { '2L': 0, '1L': 0, '500ml': 0 };
+    let selectedGalleryImageBase64 = "";
+    let activeOrderIndex = null;
+
+    if (!localStorage.getItem("p2L")) localStorage.setItem("p2L", "1200");
+    if (!localStorage.getItem("p1L")) localStorage.setItem("p1L", "480");
+    if (!localStorage.getItem("p500ml")) localStorage.setItem("p500ml", "210");
+    if (!localStorage.getItem("emergencyPin")) localStorage.setItem("emergencyPin", "3333");
+
+    window.onload = function() { loadRates(); };
+
+    function loadRates() {
+        let p2 = parseInt(localStorage.getItem("p2L"));
+        let p1 = parseInt(localStorage.getItem("p1L"));
+        let p5 = parseInt(localStorage.getItem("p500ml"));
+
+        document.getElementById("priceDisplay2L").innerText = p2;
+        document.getElementById("perBottle2L").innerText = Math.round(p2 / 30);
+
+        document.getElementById("priceDisplay1L").innerText = p1;
+        document.getElementById("perBottle1L").innerText = Math.round(p1 / 30);
+
+        document.getElementById("priceDisplay500ml").innerText = p5;
+        document.getElementById("perBottle500ml").innerText = Math.round(p5 / 30);
+
+        calculateTotalBill();
+    }
+
+    function changeQty(type, amount) {
+        if (qty[type] + amount >= 0) {
+            qty[type] += amount;
+            document.getElementById('qty' + type).innerText = qty[type];
+            calculateTotalBill();
+        }
+    }
+
+    function calculateTotalBill() {
+        let p2 = parseInt(localStorage.getItem("p2L"));
+        let p1 = parseInt(localStorage.getItem("p1L"));
+        let p5 = parseInt(localStorage.getItem("p500ml"));
+
+        let total = (qty['2L'] * p2) + (qty['1L'] * p1) + (qty['500ml'] * p5);
+        document.getElementById("totalBillAmount").innerText = total;
+    }
+
+    function goToStep2Banner() {
+        let total = parseInt(document.getElementById("totalBillAmount").innerText);
+        if (total === 0) {
+            alert("Kripya kam se kam ek bundle select karein!");
+            return;
+        }
+        document.getElementById("step1Bundles").classList.add("hidden");
+        document.getElementById("step2Details").classList.remove("hidden");
+        updateBannerLive();
+    }
+
+    function backToStep1() {
+        document.getElementById("step2Details").classList.add("hidden");
+        document.getElementById("step1Bundles").classList.remove("hidden");
+    }
+
+    function updateBannerLive() {
+        let sName = document.getElementById("inputShopName").value || "AQUACIUM";
+        let sAddr = document.getElementById("inputShopAddress").value || "India";
+        document.getElementById("bannerShopName").innerText = sName;
+        document.getElementById("bannerAddress").innerText = "📍 Address: " + sAddr;
+    }
+
+    // AI Banner Generator Live Preview ("Aapka banner aisa hai")
+    function generateAIBannerLive() {
+        let promptText = document.getElementById("aiPromptInput").value;
+        let aiBox = document.getElementById("aiResultDisplayBox");
+        
+        if (promptText.trim() !== "") {
+            aiBox.innerHTML = "✨ AI Generated Banner Style: <b>" + promptText + "</b> (Aapka banner aisa banega)";
+            aiBox.style.display = "block";
+        } else {
+            aiBox.style.display = "none";
+        }
+    }
+
+    // Full Size Gallery Image Preview Handler
+    function previewFullGalleryImage(event) {
+        let file = event.target.files[0];
+        if (file) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                selectedGalleryImageBase64 = e.target.result;
+                let imgElem = document.getElementById("bannerFullUserImg");
+                imgElem.src = selectedGalleryImageBase64;
+                imgElem.style.display = "block"; // Full size display
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function submitOrderOK() {
+        let name = document.getElementById("custName").value;
+        let mobile = document.getElementById("custMobile").value;
+        let address = document.getElementById("custAddress").value;
+        let total = document.getElementById("totalBillAmount").innerText;
+
+        if (!name || !mobile || !address) {
+            alert("Kripya Naam, Mobile aur Address sabhi details bharein!");
+            return;
+        }
+
+        let orderData = {
+            id: "AC-" + Math.floor(1000 + Math.random() * 9000),
+            name: name,
+            mobile: mobile,
+            address: address,
+            items: `2L: ${qty['2L']}, 1L: ${qty['1L']}, 500ml: ${qty['500ml']}`,
+            total: total,
+            shopName: document.getElementById("inputShopName").value,
+            shopAddress: document.getElementById("inputShopAddress").value,
+            aiRequest: document.getElementById("aiPromptInput").value,
+            bannerImage: selectedGalleryImageBase64,
+            date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString()
+        };
+
+        let pendingOrders = JSON.parse(localStorage.getItem("pendingOrders")) || [];
+        pendingOrders.unshift(orderData);
+        localStorage.setItem("pendingOrders", JSON.stringify(pendingOrders));
+
+        alert("Order Successfully Placed! Total Bill: ₹" + total);
+        location.reload();
+    }
+
+    function showPage(pageId) {
+        document.getElementById("customerPage").classList.add("hidden");
+        document.getElementById("ownerLoginPage").classList.add("hidden");
+        document.getElementById("ownerDashboardPage").classList.add("hidden");
+
+        document.getElementById(pageId).classList.remove("hidden");
+        if(pageId === 'customerPage') {
+            backToStep1();
+        }
+    }
+
+    function showOwnerTab(tabId) {
+        let tabs = document.querySelectorAll('.owner-tab');
+        tabs.forEach(t => t.classList.add('hidden'));
+        document.getElementById(tabId).classList.remove('hidden');
+        closeDetailBox();
+    }
+
+    function loginOwner() {
+        let pin = document.getElementById("ownerPinInput").value;
+        let customPin = localStorage.getItem("customPin") || "1234";
+        let emergencyPin = localStorage.getItem("emergencyPin") || "3333";
+
+        if (pin === emergencyPin || pin === customPin) {
+            alert("Login Successful!");
+            document.getElementById("ownerLoginPage").classList.add("hidden");
+            document.getElementById("ownerDashboardPage").classList.remove("hidden");
+            document.getElementById("ownerPinInput").value = "";
+
+            document.getElementById("rateInput2L").value = localStorage.getItem("p2L");
+            document.getElementById("rateInput1L").value = localStorage.getItem("p1L");
+            document.getElementById("rateInput500ml").value = localStorage.getItem("p500ml");
+
+            showOwnerTab('incomingTab');
+            loadIncomingOrders();
+            loadSoldHistory();
+        } else {
+            alert("Galat PIN! Kripya sahi PIN daalein.");
+            document.getElementById("ownerPinInput").value = "";
+        }
+    }
+
+    function loadIncomingOrders() {
+        let list = document.getElementById("incomingOrdersList");
+        let orders = JSON.parse(localStorage.getItem("pendingOrders")) || [];
+        if(orders.length === 0) {
+            list.innerHTML = "<p>Koi naya order nahi hai.</p>";
+            return;
+        }
+        let html = "";
+        orders.forEach((o, index) => {
+            html += `<div class="order-card" onclick="viewOrderDetail(${index})">
+                <b>Order ID:</b> ${o.id} | <b>Date:</b> ${o.date}<br>
+                <b>Customer:</b> ${o.name} (${o.mobile})<br>
+                <b>Total: ₹${o.total}</b> <i>(Click to view, print bill or full banner)</i>
+            </div>`;
+        });
+        list.innerHTML = html;
+    }
+
+    function viewOrderDetail(index) {
+        activeOrderIndex = index;
+        let orders = JSON.parse(localStorage.getItem("pendingOrders")) || [];
+        let o = orders[index];
+        if(!o) return;
+
+        // Bill Content
+        let detailHTML = `
+            <p><b>Order ID:</b> ${o.id}</p>
+            <p><b>Date & Time:</b> ${o.date}</p>
+            <hr style="margin:6px 0;">
+            <p><b>Customer Name:</b> ${o.name}</p>
+            <p><b>Mobile:</b> ${o.mobile}</p>
+            <p><b>Address:</b> ${o.address}</p>
+            <hr style="margin:6px 0;">
+            <p><b>Items Ordered:</b> ${o.items}</p>
+            <p><b>Total Amount: ₹${o.total}</b></p>
+        `;
+        document.getElementById("detailContent").innerHTML = detailHTML;
+
+        // Full Size Banner Content for Print
+        let imgHtml = o.bannerImage ? `<br><img src="${o.bannerImage}" style="width:100%; max-height:220px; object-fit:cover; border-radius:8px; margin-top:10px; border:2px solid white;" alt="Full Banner">` : "";
+        let aiTextHtml = o.aiRequest ? `<p style="background:rgba(255,255,255,0.2); padding:6px; border-radius:4px; margin-top:8px;">✨ AI Request: ${o.aiRequest}</p>` : "";
+
+        let bannerHTML = `
+            <h2 style="margin:0; font-size:24px; text-transform:uppercase;">${o.shopName}</h2>
+            <p style="margin:6px 0; font-size:14px;">📍 ${o.shopAddress}</p>
+            ${aiTextHtml}
+            ${imgHtml}
+        `;
+        document.getElementById("bannerPrintContent").innerHTML = bannerHTML;
+
+        document.getElementById("orderDetailBox").classList.remove("hidden");
+    }
+
+    function closeDetailBox() {
+        document.getElementById("orderDetailBox").classList.add("hidden");
+        activeOrderIndex = null;
+    }
+
+    function printOnlyBill() {
+        let billElem = document.getElementById("printBillSection");
+        billElem.classList.add("printable-bill");
+        document.getElementById("printBannerSection").style.display = "none";
+        window.print();
+        document.getElementById("printBannerSection").style.display = "block";
+        billElem.classList.remove("printable-bill");
+    }
+
+    function printOnlyBanner() {
+        let bannerElem = document.getElementById("printBannerSection");
+        bannerElem.classList.add("printable-banner");
+        document.getElementById("printBillSection").style.display = "none";
+        window.print();
+        document.getElementById("printBillSection").style.display = "block";
+        bannerElem.classList.remove("printable-banner");
+    }
+
+    function markAsDeliveredCurrent() {
+        if(activeOrderIndex !== null) {
+            markAsDelivered(activeOrderIndex);
+        }
+    }
+
+    function markAsDelivered(index) {
+        let pending = JSON.parse(localStorage.getItem("pendingOrders")) || [];
+        let sold = JSON.parse(localStorage.getItem("soldOrders")) || [];
+
+        let deliveredOrder = pending.splice(index, 1)[0];
+        sold.unshift(deliveredOrder);
+
+        localStorage.setItem("pendingOrders", JSON.stringify(pending));
+        localStorage.setItem("soldOrders", JSON.stringify(sold));
+
+        alert("Order Delivered & Moved to Sold History!");
+        closeDetailBox();
+        loadIncomingOrders();
+        loadSoldHistory();
+    }
+
+    function loadSoldHistory() {
+        let list = document.getElementById("soldHistoryList");
+        let history = JSON.parse(localStorage.getItem("soldOrders")) || [];
+        if(history.length === 0) {
+            list.innerHTML = "<p>Abhi tak koi sold history nahi hai.</p>";
+            return;
+        }
+        let html = "";
+        history.forEach(o => {
+            html += `<div class="order-card" style="border-left-color: #2e7d32;">
+                <b>Order ID:</b> ${o.id} | <b>Delivered Date:</b> ${o.date}<br>
+                <b>Customer:</b> ${o.name} (${o.mobile})<br>
+                <b>Address:</b> ${o.address}<br>
+                <b>Items:</b> ${o.items} | <b>Total: ₹${o.total}</b>
+            </div>`;
+        });
+        list.innerHTML = html;
+    }
+
+    function saveOwnerRates() {
+        let r2 = document.getElementById("rateInput2L").value;
+        let r1 = document.getElementById("rateInput1L").value;
+        let r5 = document.getElementById("rateInput500ml").value;
+
+        if(r2 && r1 && r5) {
+            localStorage.setItem("p2L", r2);
+            localStorage.setItem("p1L", r1);
+            localStorage.setItem("p500ml", r5);
+            alert("Rates Updated Successfully!");
+            loadRates();
+        } else {
+            alert("Sabhi rates bharein!");
+        }
+    }
+
+    function changePin() {
+        let p = document.getElementById("newPinInput").value;
+        if(p) {
+            localStorage.setItem("customPin", p);
+            alert("New PIN Saved Successfully!");
+            document.getElementById("newPinInput").value = "";
+        } else {
+            alert("Kripya valid PIN daalein!");
+        }
+    }
+
+    function clearHistory() {
+        if(confirm("Kya aap saari sold history delete karna chahte hain?")) {
+            localStorage.removeItem("soldOrders");
+            loadSoldHistory();
+        }
+    }
+
+    function logoutOwner() {
+        document.getElementById("ownerDashboardPage").classList.add("hidden");
+        showPage('customerPage');
+    }
+</script>
+</body>
+</html>
+
+
